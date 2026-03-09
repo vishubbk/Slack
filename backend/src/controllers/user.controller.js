@@ -1,0 +1,192 @@
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import User from "../models/user-model.js";
+
+/* ===============================
+   GENERATE JWT TOKEN
+================================ */
+const generateToken = (id) => {
+  return jwt.sign({ id }, process.env.JWT_SECRET, {
+    expiresIn: "7d",
+  });
+};
+
+/* ===============================
+   REGISTER USER
+================================ */
+export const registerUser = async (req, res, next) => {
+  try {
+    const { fullName, email, password, contact } = req.body;
+
+    if (!fullName || !email || !password || !contact) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
+    const userExists = await User.findOne({ email });
+    if (userExists) {
+      return res.status(400).json({ message: "User already exists" });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const user = await User.create({
+      fullName,
+      email,
+      password: hashedPassword,
+      contact,
+    });
+
+    res.status(201).json({
+      success: true,
+      _id: user._id,
+      fullName: user.fullName,
+      email: user.email,
+      token: generateToken(user._id),
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/* ===============================
+   LOGIN USER
+================================ */
+export const loginUser = async (req, res, next) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ message: "Please provide email & password" });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    res.status(200).json({
+      success: true,
+      _id: user._id,
+      fullName: user.fullName,
+      email: user.email,
+      theme: user.theme,
+      profilePic: user.profilePic,
+      token: generateToken(user._id),
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/* ===============================
+   LOGOUT USER
+================================ */
+export const logoutUser = async (req, res, next) => {
+  try {
+    res.status(200).json({ success: true, message: "Logged out successfully" });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/* ===============================
+   GET LOGGED-IN USER PROFILE
+================================ */
+export const getProfile = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user._id).select("-password");
+
+    res.status(200).json({
+      success: true,
+      user,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/* ===============================
+   UPDATE PROFILE
+================================ */
+export const updateProfile = async (req, res, next) => {
+  try {
+    const { fullName, theme, profilePic } = req.body;
+
+    const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    user.fullName = fullName || user.fullName;
+    user.theme = theme || user.theme;
+    user.profilePic = profilePic || user.profilePic;
+
+    await user.save();
+
+    res.status(200).json({ success: true, user });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/* ===============================
+   CHANGE PASSWORD
+================================ */
+export const changePassword = async (req, res, next) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch)
+      return res.status(400).json({ message: "Current password is incorrect" });
+
+    user.password = await bcrypt.hash(newPassword, 10);
+    await user.save();
+
+    res.status(200).json({ success: true, message: "Password updated" });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/* ===============================
+   GET USER BY ID
+================================ */
+export const getUserById = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.params.userId).select("-password");
+
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    res.status(200).json({ success: true, user });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/* ===============================
+   SEARCH USERS
+================================ */
+export const searchUsers = async (req, res, next) => {
+  try {
+    const { query } = req.query;
+
+    if (!query)
+      return res.status(400).json({ message: "Search query is required" });
+
+    const users = await User.find({
+      fullName: { $regex: query, $options: "i" },
+      _id: { $ne: req.user._id },
+    }).select("fullName email profilePic");
+
+    res.status(200).json({ success: true, users });
+  } catch (error) {
+    next(error);
+  }
+};
