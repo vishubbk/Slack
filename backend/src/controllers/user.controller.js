@@ -1,6 +1,9 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
+import { SendEmail } from "../../config/email.verification.js";
 import User from "../models/user-model.js";
+import Otp from "../models/otp-model.js";
 
 /* ===============================
    GENERATE JWT TOKEN
@@ -18,7 +21,7 @@ export const registerUser = async (req, res, next) => {
   try {
     const { fullName, email, password, contact } = req.body;
 
-    if (!fullName || !email || !password || !contact) {
+    if (!fullName || !email || !password) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
@@ -37,11 +40,14 @@ export const registerUser = async (req, res, next) => {
     });
 
     res.status(201).json({
-      success: true,
-      _id: user._id,
-      fullName: user.fullName,
-      email: user.email,
-      token: generateToken(user._id),
+      status: "success",
+      message: "User registered successfully",
+      data: {
+        _id: user._id,
+        fullName: user.fullName,
+        email: user.email,
+        token: generateToken(user._id),
+      },
     });
   } catch (error) {
     next(error);
@@ -70,13 +76,16 @@ export const loginUser = async (req, res, next) => {
     }
 
     res.status(200).json({
-      success: true,
-      _id: user._id,
-      fullName: user.fullName,
-      email: user.email,
-      theme: user.theme,
-      profilePic: user.profilePic,
-      token: generateToken(user._id),
+      status: "success",
+      message: "Login successful",
+      data: {
+        _id: user._id,
+        fullName: user.fullName,
+        email: user.email,
+        theme: user.theme,
+        profilePic: user.profilePic,
+        token: generateToken(user._id),
+      },
     });
   } catch (error) {
     next(error);
@@ -88,11 +97,116 @@ export const loginUser = async (req, res, next) => {
 ================================ */
 export const logoutUser = async (req, res, next) => {
   try {
-    res.status(200).json({ success: true, message: "Logged out successfully" });
+    res.status(200).json({
+      status: "success",
+      message: "Logged out successfully",
+    });
   } catch (error) {
     next(error);
   }
 };
+
+/* ===============================
+   SEND OTP
+================================ */
+export const sendOtp = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        status: "error",
+        message: "Email is required",
+      });
+    }
+
+    // Generate 6-digit OTP
+    const otp = crypto.randomInt(100000, 999999).toString();
+
+    // Delete old OTPs for this email
+    await Otp.deleteMany({ email });
+
+    // Save OTP in temporary collection
+    const expiry = Date.now() + 5 * 60 * 1000;
+
+    await Otp.create({
+      email,
+      otp,
+      expiresAt: expiry,
+    });
+
+    // Send Email
+    await SendEmail(email, "Your OTP Code", otp);
+
+    return res.status(200).json({
+      status: "success",
+      message: "OTP sent successfully",
+    });
+  } catch (error) {
+    console.error("❌ OTP ERROR:", error.message);
+    return res.status(500).json({
+      status: "error",
+      message: "Internal Server Error",
+    });
+  }
+};
+
+/* ===============================
+   VERIFY OTP
+================================ */
+export const verifyOtp = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    const record = await Otp.findOne({ email, otp });
+
+    if (!record) {
+      return res.status(400).json({
+        status: "error",
+        message: "Invalid OTP",
+      });
+    }
+
+    if (record.expiresAt < Date.now()) {
+      return res.status(400).json({
+        status: "error",
+        message: "OTP expired",
+      });
+    }
+
+    // Delete OTP after verification
+    await Otp.deleteMany({ email });
+
+    // Check or create user
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      user = await User.create({
+        email,
+        isVerified: true,
+      });
+    }
+
+    // Generate token
+    const token = generateToken(user._id);
+
+    return res.status(200).json({
+      status: "success",
+      message: "OTP verified successfully",
+      data: {
+        token,
+        user,
+      },
+    });
+  } catch (error) {
+    console.error("❌ VERIFY ERROR:", error.message);
+    return res.status(500).json({
+      status: "error",
+      message: "Internal Server Error",
+    });
+  }
+};
+
 
 /* ===============================
    GET LOGGED-IN USER PROFILE
@@ -102,8 +216,8 @@ export const getProfile = async (req, res, next) => {
     const user = await User.findById(req.user._id).select("-password");
 
     res.status(200).json({
-      success: true,
-      user,
+      status: "success",
+      data: user,
     });
   } catch (error) {
     next(error);
@@ -126,7 +240,11 @@ export const updateProfile = async (req, res, next) => {
 
     await user.save();
 
-    res.status(200).json({ success: true, user });
+    res.status(200).json({
+      status: "success",
+      message: "Profile updated successfully",
+      data: user,
+    });
   } catch (error) {
     next(error);
   }
@@ -149,7 +267,10 @@ export const changePassword = async (req, res, next) => {
     user.password = await bcrypt.hash(newPassword, 10);
     await user.save();
 
-    res.status(200).json({ success: true, message: "Password updated" });
+    res.status(200).json({
+      status: "success",
+      message: "Password updated successfully",
+    });
   } catch (error) {
     next(error);
   }
@@ -164,7 +285,10 @@ export const getUserById = async (req, res, next) => {
 
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    res.status(200).json({ success: true, user });
+    res.status(200).json({
+      status: "success",
+      data: user,
+    });
   } catch (error) {
     next(error);
   }
@@ -185,7 +309,10 @@ export const searchUsers = async (req, res, next) => {
       _id: { $ne: req.user._id },
     }).select("fullName email profilePic");
 
-    res.status(200).json({ success: true, users });
+    res.status(200).json({
+      status: "success",
+      data: users,
+    });
   } catch (error) {
     next(error);
   }
