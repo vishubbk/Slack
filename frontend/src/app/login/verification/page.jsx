@@ -1,7 +1,45 @@
 "use client";
 import Image from "next/image";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import toast, { Toaster } from "react-hot-toast";
+
 
 const Verification = () => {
+  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
+  const router = useRouter();
+  const searchParams = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
+  const email = searchParams.get("email");
+
+  const matchOtp = async ()=>{
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/v1/users/verifyOtp`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          email,
+          otp: otp.join("")
+        })
+      });
+
+      const data = await res.json();
+      console.log(data);
+
+      if (data.status === "success") {
+        toast.success("OTP Verified ");
+        router.push("/");
+      } else {
+        toast.error(data.message || "Invalid OTP ❌");
+      }
+    } catch (error) {
+      toast.error("Server error ❌");
+      console.error(error);
+    }
+  }
+
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#f4ede4] px-4">
       <div className="w-full max-w-lg text-center flex flex-col items-center">
@@ -33,13 +71,18 @@ const Verification = () => {
               <input
                 key={i}
                 maxLength={1}
+                value={otp[i]}
                 onChange={(e) => {
+                  const newOtp = [...otp];
+                  newOtp[i] = e.target.value;
+                  setOtp(newOtp);
+
                   if (e.target.value && e.target.nextSibling) {
                     e.target.nextSibling.focus();
                   }
                 }}
                 onKeyDown={(e) => {
-                  if (e.key === "Backspace" && !e.target.value && e.target.previousSibling) {
+                  if (e.key === "Backspace" && !otp[i] && e.target.previousSibling) {
                     e.target.previousSibling.focus();
                   }
                 }}
@@ -48,8 +91,11 @@ const Verification = () => {
             ))}
         </div>
         <div>
-          <button className="w-full px-10 mb-3 bg-[#4A154B] text-white py-3 rounded-lg font-semibold hover:scale-[1.02] active:scale-[0.98] transition">
-        Continue
+          <button
+            onClick={matchOtp}
+            className="w-full px-10 mb-3 bg-[#4A154B] text-white py-3 rounded-lg font-semibold hover:scale-[1.02] active:scale-[0.98] transition"
+          >
+            Continue
           </button>
         </div>
 
@@ -60,8 +106,8 @@ const Verification = () => {
 
         {/* Actions */}
         <div className="flex flex-col gap-3 items-center w-full">
-          <button className="text-[#771978] font-semibold hover:underline text-center">
-           Can't find your code ? Request a new code
+          <button className="text-[#000000] flex  font-semibold  text-center">
+           Can't find your code <p className="text-[#771978] hover:underline">? Request a new code</p>
           </button>
           <button
             onClick={() => window.open("https://mail.google.com", "_blank")}
@@ -69,12 +115,11 @@ const Verification = () => {
           >
             Open Gmail
           </button>
-          <button className="text-gray-400 hover:underline text-sm text-center">
-            Try another email
-          </button>
+
         </div>
 
       </div>
+      <Toaster position="top-right" reverseOrder={false} />
     </div>
   );
 };

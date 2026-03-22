@@ -156,7 +156,8 @@ export const sendOtp = async (req, res) => {
 ================================ */
 export const verifyOtp = async (req, res) => {
   try {
-    const { email, otp } = req.body;
+    const { otp ,email} = req.body;
+    console.log("VERIFY OTP:", email, otp);
 
     const record = await Otp.findOne({ email, otp });
 

@@ -13,6 +13,8 @@ import {
 } from "../controllers/user.controller.js";
 
 import { protect } from "../middlewares/authMiddleware.js";
+import otpLimiter from "../middlewares/otpLimiter.js";
+
 
 const router = express.Router();
 
@@ -20,7 +22,7 @@ const router = express.Router();
 router.post("/register", registerUser);
 router.post("/login", loginUser);
 router.post("/logout", protect, logoutUser);
-router.post("/sendOtp", sendOtp);
+router.post("/sendOtp", otpLimiter,  sendOtp);
 router.post("/verifyOtp", verifyOtp);
 
 
