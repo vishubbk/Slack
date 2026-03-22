@@ -156,7 +156,7 @@ export const sendOtp = async (req, res) => {
 ================================ */
 export const verifyOtp = async (req, res) => {
   try {
-    const { otp ,email} = req.body;
+    const { otp, email } = req.body;
     console.log("VERIFY OTP:", email, otp);
 
     const record = await Otp.findOne({ email, otp });
@@ -191,14 +191,22 @@ export const verifyOtp = async (req, res) => {
     // Generate token
     const token = generateToken(user._id);
 
+    // 🔥 ✅ SET COOKIE HERE
+    res.cookie("token", token, {
+      httpOnly: true,              // 🔒 secure (no JS access)
+      secure: false,               // ⚠️ localhost (true in production)
+      sameSite: "lax",
+      maxAge: 24 * 60 * 60 * 1000, // 1 day
+    });
+
     return res.status(200).json({
       status: "success",
       message: "OTP verified successfully",
       data: {
-        token,
-        user,
+        user, // ✅ token remove kar sakta hai (optional)
       },
     });
+
   } catch (error) {
     console.error("❌ VERIFY ERROR:", error.message);
     return res.status(500).json({

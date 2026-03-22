@@ -18,6 +18,7 @@ const Verification = () => {
         headers: {
           "Content-Type": "application/json"
         },
+        credentials: "include",
         body: JSON.stringify({
           email,
           otp: otp.join("")
@@ -59,9 +60,19 @@ const Verification = () => {
           We emailed you a code
         </h1>
 
-        <p className="text-gray-500 mb-8 text-sm md:text-base text-center">
+        <p className="text-gray-500 mb-3 text-sm md:text-base text-center">
           Enter the 6-digit code sent to your email to continue.
         </p>
+        <div className="flex items-center justify-center gap-2 mb-4">
+  <p className="text-[#5122d1] text-sm font-medium">{email}</p>
+
+  <button
+    onClick={() => router.back()} // 🔥 go to previous page
+    className="text-[#262f6a] hover:scale-110 transition cursor-pointer"
+  >
+    ✏️
+  </button>
+</div>
 
         {/* OTP Boxes */}
         <div className="flex justify-center gap-3 mb-8 text-gray-700 w-full">
