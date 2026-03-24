@@ -2,16 +2,48 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import toast, { Toaster } from "react-hot-toast";
 import CreateWorkspace from "../components/CreateWorkspace";
 
-const Login = () => {
+const Onboarding = () => {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
-  const [email, setEmail] = useState("");
-  const workspaces = ["John", "hiaa", "siaa", "vishu","saurabh"];
   const [workspaceId, setWorkspaceId] = useState("");
+
+  const fetchWorkspaces = async () => {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_BASE_URL}/api/v1/workspaces`,
+      {
+        credentials: "include",
+      }
+    );
+
+    const data = await res.json();
+    return data?.data || data || [];
+  };
+
+ const {
+  data: workspaces = [],
+  isLoading,
+  error,
+} = useQuery({
+  queryKey: ["workspaces"],
+  queryFn: fetchWorkspaces,
+
+  // 🔥 IMPORTANT SETTINGS
+  staleTime: 1000 * 60 * 5,        // 5 min tak fresh
+  cacheTime: 1000 * 60 * 10,       // cache store rahe
+  refetchOnMount: false,           // mount pe refetch nahi
+  refetchOnWindowFocus: false,     // tab change pe refetch nahi
+});
+  if (isLoading) {
+    return <div className="flex justify-center items-center h-screen">Loading...</div>;
+  }
+
+  if (error) {
+    return <div className="flex justify-center items-center h-screen">Error loading workspaces</div>;
+  }
 
   return (
     <div className="flex items-center justify-center bg-gradient-to-br from-[#f4ede4] to-white px-4">
@@ -43,11 +75,11 @@ const Login = () => {
             </div>
 
             <div className="flex flex-col gap-2 mt-3 max-h-[300px] overflow-y-auto no-scrollbar">
-              {workspaces.map((name, index) => (
+              {workspaces.map((ws) => (
                 <div
-                  key={index}
+                  key={ws._id}
                   onClick={() => {
-                    const id = `workspace-${index}`;
+                    const id = ws._id;
                     setWorkspaceId(id);
                     router.push(`/workspace/${id}`);
                   }}
@@ -55,24 +87,24 @@ const Login = () => {
                   tabIndex={0}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
-                      const id = `workspace-${index}`;
+                      const id = ws._id;
                       setWorkspaceId(id);
                       router.push(`/workspace/${id}`);
                     }
                   }}
                   className={`flex w-full items-center justify-between p-3 md:p-4 border rounded-lg cursor-pointer transition ${
-                    workspaceId === `workspace-${index}`
+                    workspaceId === ws._id
                       ? "border-[#4A154B] bg-[#f4ede4]"
                       : "border-gray-300 hover:bg-gray-50"
                   }`}
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 md:w-10 md:h-10 bg-gray-300 rounded-md flex items-center justify-center font-bold text-gray-700 text-sm md:text-base">
-                      {name.charAt(0).toUpperCase()}
+                      {ws.name?.charAt(0).toUpperCase()}
                     </div>
                     <div>
-                      <p className="font-medium text-gray-800">{name}</p>
-                      <p className="text-xs text-gray-500">1 member</p>
+                      <p className="font-medium text-gray-800">{ws.name}</p>
+                      <p className="text-xs text-gray-500">{ws.members?.length || 0} members</p>
                     </div>
                   </div>
 
@@ -95,4 +127,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default Onboarding;

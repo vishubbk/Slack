@@ -9,7 +9,7 @@ import Otp from "../models/otp-model.js";
    GENERATE JWT TOKEN
 ================================ */
 const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, {
+  return jwt.sign({ userId: id }, process.env.JWT_SECRET, {
     expiresIn: "7d",
   });
 };
@@ -39,14 +39,20 @@ export const registerUser = async (req, res, next) => {
       contact,
     });
 
+    const token = generateToken(user._id);
+
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: false,
+      sameSite: "lax",
+      maxAge: 24 * 60 * 60 * 1000,
+    });
+
     res.status(201).json({
       status: "success",
       message: "User registered successfully",
       data: {
-        _id: user._id,
-        fullName: user.fullName,
-        email: user.email,
-        token: generateToken(user._id),
+        user,
       },
     });
   } catch (error) {
@@ -75,16 +81,20 @@ export const loginUser = async (req, res, next) => {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
+    const token = generateToken(user._id);
+
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: false,
+      sameSite: "lax",
+      maxAge: 24 * 60 * 60 * 1000,
+    });
+
     res.status(200).json({
       status: "success",
       message: "Login successful",
       data: {
-        _id: user._id,
-        fullName: user.fullName,
-        email: user.email,
-        theme: user.theme,
-        profilePic: user.profilePic,
-        token: generateToken(user._id),
+        user,
       },
     });
   } catch (error) {
@@ -97,6 +107,8 @@ export const loginUser = async (req, res, next) => {
 ================================ */
 export const logoutUser = async (req, res, next) => {
   try {
+    res.clearCookie("token");
+
     res.status(200).json({
       status: "success",
       message: "Logged out successfully",
