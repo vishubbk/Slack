@@ -65,7 +65,7 @@ const userSchema = new mongoose.Schema(
       "bigBusiness",
       "fallingLeaves"
     ],
-    default: "chillVibes",
+    default: "rose",
   }
 },
 
