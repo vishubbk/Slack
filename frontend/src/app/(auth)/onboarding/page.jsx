@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import toast, { Toaster } from "react-hot-toast";
-import CreateWorkspace from "../components/CreateWorkspace";
+import CreateWorkspace from "../../components/CreateWorkspace";
 
 const Onboarding = () => {
   const router = useRouter();

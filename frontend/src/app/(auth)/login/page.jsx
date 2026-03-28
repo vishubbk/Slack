@@ -35,7 +35,7 @@ const Login = () => {
 
       if (data.status === "success") {
         toast.success("OTP sent successfully 🚀");
-        router.push(`/login/verification?email=${email}`);
+        router.push(`/verification?email=${email}`);
       } else {
         toast.error(data.message || "Failed to send OTP ❌");
       }

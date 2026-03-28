@@ -144,3 +144,104 @@
     -ms-overflow-style: none;  /* IE and Edge */
     scrollbar-width: none;     /* Firefox */
 }
+
+
+/* ========================================================= */
+/* 🎨 PREMIUM SLACK-STYLE THEMES */
+/* ========================================================= */
+
+/* 🔵 Slack Default */
+.theme-spike {
+  --primary: #611f69;
+  --sidebar: #3f0e40;
+  --accent: #7a1fa2;
+}
+.dark.theme-spike {
+  --primary: #c084fc;
+  --sidebar: #1a1d21;
+  --accent: #9333ea;
+}
+
+/* 🧊 Ice Blue */
+.theme-iceBlue {
+  --primary: #2563eb;
+  --sidebar: #e0f2fe;
+  --accent: #38bdf8;
+}
+.dark.theme-iceBlue {
+  --primary: #60a5fa;
+  --sidebar: #0f172a;
+  --accent: #3b82f6;
+}
+
+/* 🌿 Forest Green */
+.theme-forest {
+  --primary: #16a34a;
+  --sidebar: #dcfce7;
+  --accent: #22c55e;
+}
+.dark.theme-forest {
+  --primary: #4ade80;
+  --sidebar: #052e16;
+  --accent: #16a34a;
+}
+
+/* 🔥 Sunset */
+.theme-sunset {
+  --primary: #ea580c;
+  --sidebar: #ffedd5;
+  --accent: #fb923c;
+}
+.dark.theme-sunset {
+  --primary: #fdba74;
+  --sidebar: #431407;
+  --accent: #f97316;
+}
+
+/* 🌌 Midnight */
+.theme-midnight {
+  --primary: #6366f1;
+  --sidebar: #e0e7ff;
+  --accent: #818cf8;
+}
+.dark.theme-midnight {
+  --primary: #a5b4fc;
+  --sidebar: #0f172a;
+  --accent: #6366f1;
+}
+
+/* 🌸 Rose */
+.theme-rose {
+  --primary: #e11d48;
+  --sidebar: #ffe4e6;
+  --accent: #fb7185;
+}
+.dark.theme-rose {
+  --primary: #fb7185;
+  --sidebar: #4c0519;
+  --accent: #e11d48;
+}
+
+/* ⚡ Neon */
+.theme-neon {
+  --primary: #22c55e;
+  --sidebar: #ecfdf5;
+  --accent: #4ade80;
+}
+.dark.theme-neon {
+  --primary: #4ade80;
+  --sidebar: #022c22;
+  --accent: #22c55e;
+}
+
+/* 🪐 Cosmic */
+.theme-cosmic {
+  --primary: #7c3aed;
+  --sidebar: #f3e8ff;
+  --accent: #a78bfa;
+}
+.dark.theme-cosmic {
+  --primary: #c4b5fd;
+  --sidebar: #1e1b4b;
+  --accent: #7c3aed;
+}

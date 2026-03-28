@@ -7,7 +7,7 @@ const userSchema = new mongoose.Schema(
       trim: true,
       minlength: 2,
       maxlength: 100,
-      default:"Spike-User"
+      default: "Spike-User",
     },
 
     email: {
@@ -45,11 +45,29 @@ const userSchema = new mongoose.Schema(
     },
 
     // 🔥 UI preferences
-    theme: {
-      type: String,
-      enum: ["light", "dark", "system"],
-      default: "dark",
-    },
+    appearance: {
+  mode: {
+    type: String,
+    enum: ["light", "dark", "system"],
+    default: "dark",
+  },
+  theme: {
+    type: String,
+    enum: [
+      "iceBlue",
+      "forest",
+      "sunset",
+      "midnight",
+      "rose",
+      "neon",
+      "cosmic",
+      "chillVibes",
+      "bigBusiness",
+      "fallingLeaves"
+    ],
+    default: "chillVibes",
+  }
+},
 
     notificationSettings: {
       emailNotifications: {
