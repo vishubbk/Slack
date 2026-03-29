@@ -8,30 +8,14 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { FiUser, FiSettings, FiLogOut } from "react-icons/fi";
 
-export default function SidebarNav({ id, workspace, user, isOwner }) {
+export default function SidebarNav({ id, workspace, user, isOwner,onOpenSettings }) {
   const [openProfile, setOpenProfile] = useState(false);
   const router = useRouter();
 
-  // 🔥 DEBUG: Check applied theme colors
-  if (typeof window !== "undefined") {
-    const root = document.documentElement;
-    const styles = getComputedStyle(root);
-
-    console.log("🎨 THEME DEBUG:");
-    console.log("Sidebar BG:", styles.getPropertyValue("--sidebar"));
-    console.log("Sidebar Text:", styles.getPropertyValue("--sidebar-foreground"));
-    console.log("Primary:", styles.getPropertyValue("--primary"));
-    console.log("Card:", styles.getPropertyValue("--card"));
-  }
 
   return (
     <div
-      onClick={() => {
-        const styles = getComputedStyle(document.documentElement);
-        console.log("🟣 CLICK DEBUG SIDEBAR:");
-        console.log("BG:", styles.getPropertyValue("--sidebar"));
-        console.log("TEXT:", styles.getPropertyValue("--sidebar-foreground"));
-      }}
+     
       className="w-19 bg-[color:var(--sidebar)] text-[color:var(--sidebar-foreground)] hidden md:flex flex-col items-center py-4 gap-6 font-medium"
     >
 
@@ -92,7 +76,7 @@ export default function SidebarNav({ id, workspace, user, isOwner }) {
         </div>
 
         <div
-          onClick={() => router.push(`/workspace/${id}/settings`)}
+          onClick={onOpenSettings}
           className="px-4 py-2 hover:bg-[color:var(--accent)] transition cursor-pointer flex items-center gap-2 text-sm"
         >
           <FiSettings /> Settings

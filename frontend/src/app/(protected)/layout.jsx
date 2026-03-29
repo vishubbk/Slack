@@ -1,12 +1,11 @@
 "use client";
 
-"use client";
-
-import { useState } from "react";
-import SettingHome from "../components/models/settingHome";
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { applyTheme } from "../../lib/theme";
+
+import Layout from "../components/layout/Layout";
+import SettingHome from "../components/models/settingHome";
 
 export default function ProtectedLayout({ children }) {
   const [openSettings, setOpenSettings] = useState(false);
@@ -30,15 +29,14 @@ export default function ProtectedLayout({ children }) {
     }
   }, [user]);
 
-  const handleOpenSettings = () => {
-    setOpenSettings(true);
-  };
-
   return (
     <>
-      {children}
-      
+      {/* 🔥 MAIN LAYOUT */}
+      <Layout onOpenSettings={() => setOpenSettings(true)}>
+        {children}
+      </Layout>
 
+      {/* 🔥 SETTINGS MODAL */}
       {openSettings && (
         <SettingHome onClose={() => setOpenSettings(false)} />
       )}

@@ -1,9 +1,7 @@
-import Navbar from "../../../components/layout/Layout"
+
 const page = () => {
   return (
-    <div>
-      <Navbar/>
-      page</div>
+    <div>page </div>
   )
 }
 
