@@ -9,7 +9,8 @@ import {
   getUserById,
   searchUsers,
   sendOtp,
-  verifyOtp
+  verifyOtp,
+  themeChange
 } from "../controllers/user.controller.js";
 
 import { protect } from "../middlewares/authMiddleware.js";
@@ -37,5 +38,8 @@ router.get("/search", protect, searchUsers);
 
 // 📄 Get user by ID
 router.get("/:userId", protect, getUserById);
+
+// Change Themes - This route allows users to change their theme preference
+router.patch("/theme",protect,themeChange);
 
 export default router;

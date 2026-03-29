@@ -153,24 +153,28 @@
 /* 🔵 Slack Default */
 .theme-spike {
   --primary: #611f69;
-  --sidebar: #3f0e40;
-  --accent: #7a1fa2;
+  --sidebar: #f3e8ff;
+  --sidebar-foreground: #2d033b;
+  --accent: #9333ea;
 }
 .dark.theme-spike {
   --primary: #c084fc;
   --sidebar: #1a1d21;
-  --accent: #9333ea;
+  --sidebar-foreground: #f3e8ff;
+  --accent: #a855f7;
 }
 
 /* 🧊 Ice Blue */
 .theme-iceBlue {
   --primary: #2563eb;
   --sidebar: #e0f2fe;
+  --sidebar-foreground: #0c4a6e;
   --accent: #38bdf8;
 }
 .dark.theme-iceBlue {
   --primary: #60a5fa;
   --sidebar: #0f172a;
+  --sidebar-foreground: #e0f2fe;
   --accent: #3b82f6;
 }
 
@@ -178,11 +182,13 @@
 .theme-forest {
   --primary: #16a34a;
   --sidebar: #dcfce7;
+  --sidebar-foreground: #14532d;
   --accent: #22c55e;
 }
 .dark.theme-forest {
   --primary: #4ade80;
   --sidebar: #052e16;
+  --sidebar-foreground: #dcfce7;
   --accent: #16a34a;
 }
 
@@ -190,23 +196,27 @@
 .theme-sunset {
   --primary: #ea580c;
   --sidebar: #ffedd5;
+  --sidebar-foreground: #7c2d12;
   --accent: #fb923c;
 }
 .dark.theme-sunset {
   --primary: #fdba74;
   --sidebar: #431407;
+  --sidebar-foreground: #ffedd5;
   --accent: #f97316;
 }
 
 /* 🌌 Midnight */
 .theme-midnight {
-  --primary: #6366f1;
+  --primary: #4f46e5;
   --sidebar: #e0e7ff;
+  --sidebar-foreground: #1e1b4b;
   --accent: #818cf8;
 }
 .dark.theme-midnight {
   --primary: #a5b4fc;
-  --sidebar: #0f172a;
+  --sidebar: #020617;
+  --sidebar-foreground: #e0e7ff;
   --accent: #6366f1;
 }
 
@@ -214,11 +224,13 @@
 .theme-rose {
   --primary: #e11d48;
   --sidebar: #ffe4e6;
+  --sidebar-foreground: #881337;
   --accent: #fb7185;
 }
 .dark.theme-rose {
   --primary: #fb7185;
   --sidebar: #4c0519;
+  --sidebar-foreground: #ffe4e6;
   --accent: #e11d48;
 }
 
@@ -226,11 +238,13 @@
 .theme-neon {
   --primary: #22c55e;
   --sidebar: #ecfdf5;
+  --sidebar-foreground: #064e3b;
   --accent: #4ade80;
 }
 .dark.theme-neon {
   --primary: #4ade80;
   --sidebar: #022c22;
+  --sidebar-foreground: #ecfdf5;
   --accent: #22c55e;
 }
 
@@ -238,10 +252,12 @@
 .theme-cosmic {
   --primary: #7c3aed;
   --sidebar: #f3e8ff;
+  --sidebar-foreground: #3b0764;
   --accent: #a78bfa;
 }
 .dark.theme-cosmic {
   --primary: #c4b5fd;
   --sidebar: #1e1b4b;
+  --sidebar-foreground: #f3e8ff;
   --accent: #7c3aed;
 }

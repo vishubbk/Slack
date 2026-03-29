@@ -169,7 +169,6 @@ export const sendOtp = async (req, res) => {
 export const verifyOtp = async (req, res) => {
   try {
     const { otp, email } = req.body;
-    console.log("VERIFY OTP:", email, otp);
 
     const record = await Otp.findOne({ email, otp });
 
@@ -338,3 +337,31 @@ export const searchUsers = async (req, res, next) => {
     next(error);
   }
 };
+
+
+/* ===============================
+   ThemeChange USERS
+================================ */
+export const themeChange = async(req,res,next)=> {
+  try {
+    const user =req.user._id;
+    const {mode, theme}= req.body;
+    console.log("THEME CHANGE REQUEST:", { user, mode, theme });
+
+
+    const updatedUser = await User.findByIdAndUpdate(user,{appearance:{theme, mode}},{new:true})
+    if(!updatedUser) return res.status(404).json({message:"User not found"});
+
+    res.status(200).json({
+      status:"success",
+      message:"Theme updated successfully",
+
+    })
+
+
+  } catch (error) {
+    console.error("❌ THEME CHANGE ERROR:", error.message);
+
+  }
+
+}
