@@ -15,7 +15,7 @@ export default function SidebarNav({ id, workspace, user, isOwner,onOpenSettings
 
   return (
     <div
-     
+
       className="w-19 bg-[color:var(--sidebar)] text-[color:var(--sidebar-foreground)] hidden md:flex flex-col items-center py-4 gap-6 font-medium"
     >
 
