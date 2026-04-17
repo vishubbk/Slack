@@ -7,6 +7,8 @@ import { applyTheme } from "../../lib/theme";
 import Layout from "../components/layout/Layout";
 import SettingHome from "../components/models/settingHome";
 
+
+
 export default function ProtectedLayout({ children }) {
   const [openSettings, setOpenSettings] = useState(false);
 

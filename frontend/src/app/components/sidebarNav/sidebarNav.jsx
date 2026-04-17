@@ -1,12 +1,9 @@
 "use client";
 import Link from "next/link";
-import { HiHome } from "react-icons/hi";
-import { IoChatbubbleSharp } from "react-icons/io5";
-import { MdGroups3, MdOutlineSettings } from "react-icons/md";
-import { FaHashtag } from "react-icons/fa6";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { FiUser, FiSettings, FiLogOut } from "react-icons/fi";
+import { Home, Hash, MessageCircle, Users, Settings, User, LogOut } from "lucide-react";
+
 
 export default function SidebarNav({ id, workspace, user, isOwner,onOpenSettings }) {
   const [openProfile, setOpenProfile] = useState(false);
@@ -28,28 +25,28 @@ export default function SidebarNav({ id, workspace, user, isOwner,onOpenSettings
   <div className="flex flex-col gap-6 text-xs items-center mt-6">
 
     <Link href={`/workspace/${id}`} className="flex flex-col items-center gap-1 hover:text-[color:var(--primary)] transition">
-      <HiHome size={18} />
+      <Home size={18} />
       <span>Home</span>
     </Link>
 
     <Link href={`/workspace/${id}/channels`} className="flex flex-col items-center gap-1 hover:text-[color:var(--primary)] transition">
-      <FaHashtag size={18} />
+      <Hash size={18} />
       <span>Channels</span>
     </Link>
 
     <Link href={`/workspace/${id}/messages`} className="flex flex-col items-center gap-1 hover:text-[color:var(--primary)] transition">
-      <IoChatbubbleSharp size={18} />
+      <MessageCircle size={18} />
       <span>Messages</span>
     </Link>
 
     <Link href={`/workspace/${id}/groups`} className="flex flex-col items-center gap-1 hover:text-[color:var(--primary)] transition">
-      <MdGroups3 size={18} />
+      <Users size={18} />
       <span>Groups</span>
     </Link>
 
     {isOwner && (
       <Link href={`/workspace/${id}/admin`} className="flex flex-col items-center gap-1 hover:text-[color:var(--primary)] transition">
-        <MdOutlineSettings size={18} />
+        <Settings size={18} />
         <span>Admin</span>
       </Link>
     )}
@@ -72,21 +69,21 @@ export default function SidebarNav({ id, workspace, user, isOwner,onOpenSettings
           onClick={() => router.push(`/workspace/${id}/profile`)}
           className="px-4 py-2 hover:bg-[color:var(--accent)] transition cursor-pointer flex items-center gap-2 text-sm"
         >
-          <FiUser /> Profile
+          <User size={16} /> Profile
         </div>
 
         <div
           onClick={onOpenSettings}
           className="px-4 py-2 hover:bg-[color:var(--accent)] transition cursor-pointer flex items-center gap-2 text-sm"
         >
-          <FiSettings /> Settings
+          <Settings size={16} /> Settings
         </div>
 
         <div
           onClick={() => router.push(`/login`)}
           className="px-4 py-2 hover:bg-red-500/20 text-red-400 cursor-pointer flex items-center gap-2 text-sm border-t border-[color:var(--border)]"
         >
-          <FiLogOut /> Sign Out
+          <LogOut size={16} /> Sign Out
         </div>
 
       </div>
