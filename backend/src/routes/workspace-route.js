@@ -23,6 +23,10 @@ router.get("/", protect, getUserWorkspaces);
 // 🔥 Get single workspace
 router.get("/:workspaceId", protect, getWorkspaceById);
 
+// 🔥 Edit single workspace
+router.patch("/:workspaceId", protect, updateWorkspace);
+
+
 // 🔥 Update workspace (only admin/subadmin)
 router.put(
   "/:workspaceId",
@@ -54,5 +58,7 @@ router.delete(
   authorizeRoles("admin"),
   removeWorkspaceMember
 );
+
+
 
 export default router;

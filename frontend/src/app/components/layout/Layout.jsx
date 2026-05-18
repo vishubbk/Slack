@@ -24,6 +24,7 @@ export default function Layout({ children, onOpenSettings }) {
       fetchData(`${process.env.NEXT_PUBLIC_BASE_URL}/api/v1/workspaces/${id}`),
   });
 
+
   const { data: user } = useQuery({
     queryKey: ["me"],
     queryFn: () =>

@@ -2,8 +2,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import { SendEmail } from "../../config/email.verification.js";
-import User from "../models/user-model.js";
-import Otp from "../models/otp-model.js";
+import prisma from "../db/db.js";
 
 /* ===============================
    GENERATE JWT TOKEN
@@ -25,21 +24,24 @@ export const registerUser = async (req, res, next) => {
       return res.status(400).json({ message: "All fields are required" });
     }
 
-    const userExists = await User.findOne({ email });
+    const userExists = await prisma.user.findUnique({
+      where: { email },
+    });
     if (userExists) {
       return res.status(400).json({ message: "User already exists" });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const user = await User.create({
-      fullName,
-      email,
-      password: hashedPassword,
-      contact,
+    const user = await prisma.user.create({
+      data: {
+        fullName,
+        email,
+        password: hashedPassword,
+      },
     });
 
-    const token = generateToken(user._id);
+    const token = generateToken(user.id);
 
     res.cookie("token", token, {
       httpOnly: true,
@@ -71,7 +73,9 @@ export const loginUser = async (req, res, next) => {
       return res.status(400).json({ message: "Something is missing" });
     }
 
-    const user = await User.findOne({ email });
+    const user = await prisma.user.findUnique({
+      where: { email },
+    });
     if (!user) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
@@ -81,7 +85,7 @@ export const loginUser = async (req, res, next) => {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    const token = generateToken(user._id);
+    const token = generateToken(user.id);
 
     res.cookie("token", token, {
       httpOnly: true,
@@ -136,15 +140,19 @@ export const sendOtp = async (req, res) => {
     const otp = crypto.randomInt(100000, 999999).toString();
 
     // Delete old OTPs for this email
-    await Otp.deleteMany({ email });
+    await prisma.otp.deleteMany({
+      where: { email },
+    });
 
     // Save OTP in temporary collection
     const expiry = Date.now() + 5 * 60 * 1000;
 
-    await Otp.create({
-      email,
-      otp,
-      expiresAt: expiry,
+    await prisma.otp.create({
+      data: {
+        email,
+        otp,
+        expiresAt: new Date(expiry),
+      },
     });
 
     // Send Email
@@ -170,7 +178,12 @@ export const verifyOtp = async (req, res) => {
   try {
     const { otp, email } = req.body;
 
-    const record = await Otp.findOne({ email, otp });
+    const record = await prisma.otp.findFirst({
+      where: {
+        email,
+        otp,
+      },
+    });
 
     if (!record) {
       return res.status(400).json({
@@ -187,20 +200,26 @@ export const verifyOtp = async (req, res) => {
     }
 
     // Delete OTP after verification
-    await Otp.deleteMany({ email });
+    await prisma.otp.deleteMany({
+      where: { email },
+    });
 
     // Check or create user
-    let user = await User.findOne({ email });
+    let user = await prisma.user.findUnique({
+      where: { email },
+    });
 
     if (!user) {
-      user = await User.create({
-        email,
-        isVerified: true,
+      user = await prisma.user.create({
+        data: {
+          email,
+          isVerified: true,
+        },
       });
     }
 
     // Generate token
-    const token = generateToken(user._id);
+    const token = generateToken(user.id);
 
     // 🔥 ✅ SET COOKIE HERE
     res.cookie("token", token, {
@@ -233,7 +252,21 @@ export const verifyOtp = async (req, res) => {
 ================================ */
 export const getProfile = async (req, res, next) => {
   try {
-    const user = await User.findById(req.user._id).select("-password");
+    const user = await prisma.user.findUnique({
+      where: {
+        id: req.user.id,
+      },
+      select: {
+        id: true,
+        fullName: true,
+        email: true,
+        avatar: true,
+        theme: true,
+        appearanceMode: true,
+        isVerified: true,
+        createdAt: true,
+      },
+    });
 
     res.status(200).json({
       status: "success",
@@ -251,19 +284,28 @@ export const updateProfile = async (req, res, next) => {
   try {
     const { fullName, theme, profilePic } = req.body;
 
-    const user = await User.findById(req.user._id);
+    const user = await prisma.user.findUnique({
+      where: {
+        id: req.user.id,
+      },
+    });
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    user.fullName = fullName || user.fullName;
-    user.theme = theme || user.theme;
-    user.profilePic = profilePic || user.profilePic;
-
-    await user.save();
+    const updatedUser = await prisma.user.update({
+      where: {
+        id: req.user.id,
+      },
+      data: {
+        fullName: fullName || user.fullName,
+        theme: theme || user.theme,
+        avatar: profilePic || user.avatar,
+      },
+    });
 
     res.status(200).json({
       status: "success",
       message: "Profile updated successfully",
-      data: user,
+      data: updatedUser,
     });
   } catch (error) {
     next(error);
@@ -277,15 +319,27 @@ export const changePassword = async (req, res, next) => {
   try {
     const { currentPassword, newPassword } = req.body;
 
-    const user = await User.findById(req.user._id);
+    const user = await prisma.user.findUnique({
+      where: {
+        id: req.user.id,
+      },
+    });
     if (!user) return res.status(404).json({ message: "User not found" });
 
     const isMatch = await bcrypt.compare(currentPassword, user.password);
     if (!isMatch)
       return res.status(400).json({ message: "Current password is incorrect" });
 
-    user.password = await bcrypt.hash(newPassword, 10);
-    await user.save();
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await prisma.user.update({
+      where: {
+        id: req.user.id,
+      },
+      data: {
+        password: hashedPassword,
+      },
+    });
 
     res.status(200).json({
       status: "success",
@@ -301,7 +355,19 @@ export const changePassword = async (req, res, next) => {
 ================================ */
 export const getUserById = async (req, res, next) => {
   try {
-    const user = await User.findById(req.params.userId).select("-password");
+    const user = await prisma.user.findUnique({
+      where: {
+        id: req.params.userId,
+      },
+      select: {
+        id: true,
+        fullName: true,
+        email: true,
+        avatar: true,
+        isOnline: true,
+        lastSeen: true,
+      },
+    });
 
     if (!user) return res.status(404).json({ message: "User not found" });
 
@@ -324,10 +390,23 @@ export const searchUsers = async (req, res, next) => {
     if (!query)
       return res.status(400).json({ message: "Search query is required" });
 
-    const users = await User.find({
-      fullName: { $regex: query, $options: "i" },
-      _id: { $ne: req.user._id },
-    }).select("fullName email profilePic");
+    const users = await prisma.user.findMany({
+      where: {
+        fullName: {
+          contains: query,
+          mode: "insensitive",
+        },
+        NOT: {
+          id: req.user.id,
+        },
+      },
+      select: {
+        id: true,
+        fullName: true,
+        email: true,
+        avatar: true,
+      },
+    });
 
     res.status(200).json({
       status: "success",
@@ -344,12 +423,20 @@ export const searchUsers = async (req, res, next) => {
 ================================ */
 export const themeChange = async(req,res,next)=> {
   try {
-    const user =req.user._id;
+    const user = req.user.id;
     const {mode, theme}= req.body;
     console.log("THEME CHANGE REQUEST:", { user, mode, theme });
 
 
-    const updatedUser = await User.findByIdAndUpdate(user,{appearance:{theme, mode}},{new:true})
+    const updatedUser = await prisma.user.update({
+      where: {
+        id: user,
+      },
+      data: {
+        theme,
+        appearanceMode: mode,
+      },
+    })
     if(!updatedUser) return res.status(404).json({message:"User not found"});
 
     res.status(200).json({

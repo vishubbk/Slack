@@ -1,5 +1,4 @@
-import Workspace from "../models/workspace-model.js";
-import User from "../models/user-model.js";
+import prisma from "../db/db.js";
 
 /* =============================
    CREATE WORKSPACE
@@ -12,15 +11,49 @@ export const createWorkspace = async (req, res) => {
       return res.status(400).json({ message: "Workspace name is required" });
     }
 
-    const workspace = await Workspace.create({
-      name,
-      owner: req.user._id,
-      members: [req.user._id],
+    const slug = name
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, "-")
+      .replace(/[^\w-]+/g, "");
+
+    const workspace = await prisma.workspace.create({
+      data: {
+        name,
+        slug,
+        owner: {
+          connect: {
+            id: req.user.id,
+          },
+        },
+        members: {
+          connect: [{
+            id: req.user.id,
+          }],
+        },
+      },
+      include: {
+        owner: {
+          select: {
+            id: true,
+            fullName: true,
+            email: true,
+          },
+        },
+        members: {
+          select: {
+            id: true,
+            fullName: true,
+            email: true,
+          },
+        },
+      },
     });
 
     res.status(201).json(workspace);
   } catch (error) {
     res.status(500).json({ message: error.message });
+    console.error("Error creating workspace:", error);
   }
 };
 
@@ -29,11 +62,31 @@ export const createWorkspace = async (req, res) => {
 ============================= */
 export const getUserWorkspaces = async (req, res) => {
   try {
-    const workspaces = await Workspace.find({
-      members: req.user._id,
-    }).populate("owner", "fullName email");
+    const admin = req.user.email;
+    if(!admin){
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    const workspaces = await prisma.workspace.findMany({
+      where: {
+        members: {
+          some: {
+            id: req.user.id,
+          },
+        },
+        isDeleted: false,
+      },
+      include: {
+        owner: {
+          select: {
+            id: true,
+            fullName: true,
+            email: true,
+          },
+        },
+      },
+    });
 
-    res.json(workspaces);
+    res.json( { data: workspaces, admin} );
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -44,9 +97,29 @@ export const getUserWorkspaces = async (req, res) => {
 ============================= */
 export const getWorkspaceById = async (req, res) => {
   try {
-    const workspace = await Workspace.findById(req.params.workspaceId)
-      .populate("owner", "fullName email")
-      .populate("members", "fullName email");
+    const workspace = await prisma.workspace.findUnique({
+      where: {
+        id: req.params.workspaceId,
+      },
+      include: {
+        owner: {
+          select: {
+            id: true,
+            fullName: true,
+            email: true,
+          },
+        },
+        members: {
+          select: {
+            id: true,
+            fullName: true,
+            email: true,
+            avatar: true,
+          },
+        },
+        channels: true,
+      },
+    });
 
     if (!workspace) {
       return res.status(404).json({ message: "Workspace not found" });
@@ -65,16 +138,26 @@ export const updateWorkspace = async (req, res) => {
   try {
     const { name } = req.body;
 
-    const workspace = await Workspace.findById(req.params.workspaceId);
+    const workspace = await prisma.workspace.findUnique({
+      where: {
+        id: req.params.workspaceId,
+      },
+    });
 
     if (!workspace) {
       return res.status(404).json({ message: "Workspace not found" });
     }
 
-    workspace.name = name || workspace.name;
-    await workspace.save();
+    const updatedWorkspace = await prisma.workspace.update({
+      where: {
+        id: req.params.workspaceId,
+      },
+      data: {
+        name: name || workspace.name,
+      },
+    });
 
-    res.json(workspace);
+    res.json(updatedWorkspace);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -85,14 +168,24 @@ export const updateWorkspace = async (req, res) => {
 ============================= */
 export const deleteWorkspace = async (req, res) => {
   try {
-    const workspace = await Workspace.findById(req.params.workspaceId);
+    const workspace = await prisma.workspace.findUnique({
+      where: {
+        id: req.params.workspaceId,
+      },
+    });
 
     if (!workspace) {
       return res.status(404).json({ message: "Workspace not found" });
     }
 
-    workspace.isDeleted = true;
-    await workspace.save();
+    await prisma.workspace.update({
+      where: {
+        id: req.params.workspaceId,
+      },
+      data: {
+        isDeleted: true,
+      },
+    });
 
     res.json({ message: "Workspace deleted successfully" });
   } catch (error) {
@@ -107,14 +200,35 @@ export const addWorkspaceMember = async (req, res) => {
   try {
     const { userId } = req.body;
 
-    const workspace = await Workspace.findById(req.params.workspaceId);
+    const workspace = await prisma.workspace.findUnique({
+      where: {
+        id: req.params.workspaceId,
+      },
+      include: {
+        members: true,
+      },
+    });
     if (!workspace) {
       return res.status(404).json({ message: "Workspace not found" });
     }
 
-    if (!workspace.members.includes(userId)) {
-      workspace.members.push(userId);
-      await workspace.save();
+    const memberExists = workspace.members.some(
+      (member) => member.id === userId
+    );
+
+    if (!memberExists) {
+      await prisma.workspace.update({
+        where: {
+          id: req.params.workspaceId,
+        },
+        data: {
+          members: {
+            connect: [{
+              id: userId,
+            }],
+          },
+        },
+      });
     }
 
     res.json({ message: "Member added successfully" });
@@ -130,16 +244,27 @@ export const removeWorkspaceMember = async (req, res) => {
   try {
     const { userId } = req.params;
 
-    const workspace = await Workspace.findById(req.params.workspaceId);
+    const workspace = await prisma.workspace.findUnique({
+      where: {
+        id: req.params.workspaceId,
+      },
+    });
     if (!workspace) {
       return res.status(404).json({ message: "Workspace not found" });
     }
 
-    workspace.members = workspace.members.filter(
-      (member) => member.toString() !== userId
-    );
-
-    await workspace.save();
+    await prisma.workspace.update({
+      where: {
+        id: req.params.workspaceId,
+      },
+      data: {
+        members: {
+          disconnect: [{
+            id: userId,
+          }],
+        },
+      },
+    });
 
     res.json({ message: "Member removed successfully" });
   } catch (error) {

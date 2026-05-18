@@ -1,20 +1,20 @@
-import rateLimit from "express-rate-limit";
+import rateLimit, { ipKeyGenerator } from "express-rate-limit";
 
 const otpLimiter = rateLimit({
-  windowMs: 15 * 1000, // ✅ 15 seconds
-  max: 2, // ✅ max 2 requests per 15 sec
+  windowMs: 15 * 1000, // 15 seconds
+  max: 2, // max 2 requests per 15 sec
 
   message: {
     success: false,
     message: "Too many OTP requests. Please wait 15 seconds.",
   },
 
-  standardHeaders: true, // ✅ modern headers
-  legacyHeaders: false, // ❌ disable old headers
+  standardHeaders: true,
+  legacyHeaders: false,
 
-  // ✅ Better: email based limit (not just IP)
+  // Safe IPv6 compatible key generator
   keyGenerator: (req) => {
-    return req.body.email || req.ip;
+    return req.body.email || ipKeyGenerator(req.ip);
   },
 });
 

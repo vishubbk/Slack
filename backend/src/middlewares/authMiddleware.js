@@ -1,10 +1,11 @@
 import jwt from "jsonwebtoken";
-import User from "../models/user-model.js";
+import prisma from "../db/db.js";
 
 export const protect = async (req, res, next) => {
   try {
     const token = req.cookies.token; // 🔥 cookie se token
-   
+    console.log("Token from cookie:", token); // 🔥 Debugging log
+
 
     if (!token) {
       return res.status(401).json({
@@ -15,7 +16,19 @@ export const protect = async (req, res, next) => {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    const user = await User.findById(decoded.userId).select("-password");
+    const user = await prisma.user.findUnique({
+      where: {
+        id: decoded.userId,
+      },
+      select: {
+        id: true,
+        fullName: true,
+        email: true,
+        avatar: true,
+        isVerified: true,
+        createdAt: true,
+      },
+    });
 
     if (!user) {
       return res.status(401).json({
