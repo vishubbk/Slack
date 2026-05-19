@@ -26,6 +26,7 @@ router.get("/:workspaceId", protect, getWorkspaceById);
 // 🔥 Edit single workspace
 router.patch("/:workspaceId", protect, updateWorkspace);
 
+// 🔥Get All User in single Workspace
 
 // 🔥 Update workspace (only admin/subadmin)
 router.put(

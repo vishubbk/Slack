@@ -76,6 +76,15 @@ export const getUserWorkspaces = async (req, res) => {
         isDeleted: false,
       },
       include: {
+        members: {
+          select:{
+            id: true,
+            fullName: true,
+            email: true,
+            avatar: true,
+          }
+        },
+
         owner: {
           select: {
             id: true,
@@ -87,12 +96,14 @@ export const getUserWorkspaces = async (req, res) => {
     });
 
     res.json( { data: workspaces, admin} );
+
+
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-/* =============================
+/* =============== ==============
    GET SINGLE WORKSPACE
 ============================= */
 export const getWorkspaceById = async (req, res) => {
@@ -136,7 +147,7 @@ export const getWorkspaceById = async (req, res) => {
 ============================= */
 export const updateWorkspace = async (req, res) => {
   try {
-    const { name } = req.body;
+    const { name, description } = req.body;
 
     const workspace = await prisma.workspace.findUnique({
       where: {
@@ -154,6 +165,7 @@ export const updateWorkspace = async (req, res) => {
       },
       data: {
         name: name || workspace.name,
+        description: description || workspace.description,
       },
     });
 
@@ -192,6 +204,8 @@ export const deleteWorkspace = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+
 
 /* =============================
    ADD MEMBER

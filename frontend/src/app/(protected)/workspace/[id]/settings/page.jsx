@@ -76,7 +76,7 @@ const {
 
         {tab === "edit" && <EditWorkspace workspace={workspace} />}
 
-        {tab === "members" && <ManageMembers />}
+        {tab === "members" && <ManageMembers workspace={workspace} />}
       </div>
     </div>
   );

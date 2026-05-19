@@ -1,6 +1,61 @@
-const EditWorkspace = ({ workspace }) => {
+"use client";
 
-  
+import { useEffect, useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import toast from "react-hot-toast";
+
+const EditWorkspace = ({ workspace }) => {
+  const queryClient = useQueryClient();
+
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+
+  useEffect(() => {
+    if (workspace) {
+      setName(workspace.name || "");
+      setDescription(workspace.description || "");
+    }
+  }, [workspace]);
+
+  const { mutate: updateWorkspace, isPending } = useMutation({
+    mutationFn: async () => {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/api/v1/workspaces/${workspace.id}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            name,
+            description,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to update workspace");
+      }
+
+      return data;
+    },
+
+    onSuccess: () => {
+      toast.success("Workspace updated successfully");
+
+      queryClient.invalidateQueries({
+        queryKey: ["workspace", workspace.id],
+      });
+    },
+
+    onError: (error) => {
+      console.error(error);
+      toast.error(error.message);
+    },
+  });
 
   return (
     <div className="w-full flex flex-col gap-8">
@@ -8,7 +63,10 @@ const EditWorkspace = ({ workspace }) => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="flex items-center gap-5">
           <img
-            src={workspace.logo || "https://ui-avatars.com/api/?name=" + workspace.name}
+            src={
+              workspace.logo ||
+              "https://ui-avatars.com/api/?name=" + workspace.name
+            }
             alt="workspace"
             className="w-24 h-24 rounded-3xl object-cover border-4 border-[color:var(--border)] shadow-lg"
           />
@@ -19,7 +77,7 @@ const EditWorkspace = ({ workspace }) => {
             </h2>
 
             <p className="text-[color:var(--muted-foreground)] mt-1 max-w-xl">
-              {workspace.description}
+              {workspace.description || "No description added yet."}
             </p>
 
             <div className="flex flex-wrap items-center gap-3 mt-4">
@@ -32,14 +90,19 @@ const EditWorkspace = ({ workspace }) => {
               </span>
 
               <span className="px-4 py-1 rounded-full text-sm border border-[color:var(--border)] bg-[color:var(--card)]">
-                🚀 Created {new Date(workspace.createdAt).toLocaleDateString()}
+                🚀 Created{" "}
+                {new Date(workspace.createdAt).toLocaleDateString()}
               </span>
             </div>
           </div>
         </div>
 
-        <button className="px-6 py-3 rounded-xl bg-[color:var(--sidebar-accent)] text-[color:var(--sidebar-accent-foreground)] font-semibold shadow-md hover:opacity-90 transition">
-          Save Changes
+        <button
+          onClick={() => updateWorkspace()}
+          disabled={isPending}
+          className="px-6 py-3 rounded-xl bg-[color:var(--sidebar-accent)] text-[color:var(--sidebar-accent-foreground)] font-semibold shadow-md hover:opacity-90 transition disabled:opacity-50"
+        >
+          {isPending ? "Saving..." : "Save Changes"}
         </button>
       </div>
 
@@ -53,7 +116,8 @@ const EditWorkspace = ({ workspace }) => {
 
             <input
               type="text"
-              defaultValue={workspace.name}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
               className="w-full mt-2 bg-[color:var(--card)] border border-[color:var(--border)] rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[color:var(--sidebar-accent)]"
             />
           </div>
@@ -65,7 +129,8 @@ const EditWorkspace = ({ workspace }) => {
 
             <textarea
               rows={5}
-              defaultValue={workspace.description || "No description added yet."}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
               className="w-full mt-2 bg-[color:var(--card)] border border-[color:var(--border)] rounded-xl px-4 py-3 outline-none resize-none focus:ring-2 focus:ring-[color:var(--sidebar-accent)]"
             />
           </div>
@@ -100,7 +165,10 @@ const EditWorkspace = ({ workspace }) => {
 
             <div className="flex items-center gap-4 mt-5">
               <img
-                src={workspace.logo || "https://ui-avatars.com/api/?name=" + workspace.name}
+                src={
+                  workspace.logo ||
+                  "https://ui-avatars.com/api/?name=" + workspace.name
+                }
                 alt="workspace"
                 className="w-20 h-20 rounded-2xl object-cover border border-[color:var(--border)]"
               />
