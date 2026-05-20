@@ -1,36 +1,109 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useEffect } from "react";
+
+import {
+  useParams,
+  useRouter,
+  useSearchParams,
+} from "next/navigation";
+
 import { useQuery } from "@tanstack/react-query";
+
+import toast, { Toaster } from "react-hot-toast";
 
 import WorkspaceSettings from "./workspaceSettings.jsx";
 import EditWorkspace from "./editWorkspace.jsx";
 import ManageMembers from "./manageMembers.jsx";
-import { useParams } from "next/navigation";
-
-
 
 const SettingsPage = () => {
-    const { id } = useParams();
+  const { id } = useParams();
+
+  const router = useRouter();
 
   const searchParams = useSearchParams();
 
-  const tab = searchParams.get("tab") || "workspace";
+  const tab =
+    searchParams.get("tab") || "workspace";
 
+  // Fetch workspace
+  const {
+    data: workspace,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["workspace", id],
 
-const {
-  data: workspace,
-  isLoading,
-  error,
-} = useQuery({
-  queryKey: ["workspace", id],
-  queryFn: () =>
-    fetchData(`${process.env.NEXT_PUBLIC_BASE_URL}/api/v1/workspaces/${id}`),
-});
+    queryFn: async () => {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/api/v1/workspaces/${id}`,
+        {
+          credentials: "include",
+        }
+      );
 
+      if (!response.ok) {
+        throw new Error(
+          "Failed to fetch workspace"
+        );
+      }
 
+      return response.json();
+    },
+  });
 
+  // Owner check
+  const isOwner =
+    workspace?.admin === true;
+
+  // Protect page
+  useEffect(() => {
+    if (isLoading) return;
+
+    // Workspace invalid
+    if (error || !workspace) {
+      toast.error("Workspace not found");
+
+      setTimeout(() => {
+        router.push("/workspace");
+      }, 1500);
+
+      return;
+    }
+
+    // Unauthorized user
+    if (!isOwner) {
+      toast.error(
+        "You are not authorized to access this page"
+      );
+
+      setTimeout(() => {
+        router.push(`/workspace/${id}`);
+      }, 1500);
+    }
+  }, [
+    workspace,
+    isLoading,
+    error,
+    isOwner,
+    router,
+    id,
+  ]);
+
+  // Loading UI
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-lg font-semibold">
+        Loading workspace settings...
+      </div>
+    );
+  }
+
+  // Unauthorized
+  if (!isOwner) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-[color:var(--background)] text-[color:var(--foreground)] p-6">
@@ -72,12 +145,30 @@ const {
 
       {/* Dynamic Content */}
       <div className="bg-[color:var(--card)] border border-[color:var(--border)] rounded-2xl p-6 shadow-sm text-[color:var(--card-foreground)]">
-        {tab === "workspace" && <WorkspaceSettings />}
+        {tab === "workspace" && (
+          <WorkspaceSettings />
+        )}
 
-        {tab === "edit" && <EditWorkspace workspace={workspace} />}
+        {tab === "edit" && (
+          <EditWorkspace workspace={workspace} />
+        )}
 
-        {tab === "members" && <ManageMembers workspace={workspace} />}
+        {tab === "members" && (
+          <ManageMembers workspace={workspace} />
+        )}
       </div>
+
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 3000,
+          style: {
+            background: "#1e1e1e",
+            color: "#fff",
+            borderRadius: "12px",
+          },
+        }}
+      />
     </div>
   );
 };

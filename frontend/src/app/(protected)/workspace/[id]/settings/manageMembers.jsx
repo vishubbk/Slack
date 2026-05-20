@@ -2,63 +2,18 @@
 
 import { Crown, Mail, UserPlus, Users, X } from "lucide-react";
 import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
-import { useParams } from "next/navigation";
-import toast, { Toaster } from "react-hot-toast";
 
 const ManageMembers = ({ workspace }) => {
   const [email, setEmail] = useState("");
   const [showInviteModal, setShowInviteModal] = useState(false);
-  const { id } = useParams();
-
-  const { mutate: inviteWorkspaceMember, isPending } = useMutation({
-    mutationFn: async () => {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/api/v1/workspaces/${id}/members`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({
-            email,
-          }),
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Failed to send invite");
-      }
-
-      return data;
-    },
-
-    onSuccess: () => {
-      toast.success("Invitation sent successfully 🎉");
-
-      setEmail("");
-      setShowInviteModal(false);
-    },
-
-    onError: (error) => {
-      console.error(error);
-
-      toast.error(
-        error.message || "Failed to send invitation"
-      );
-    },
-  });
 
   const handleInviteMember = () => {
-    if (!email) {
-      toast.error("Please enter email");
-      return;
-    }
+    if (!email) return;
 
-    inviteWorkspaceMember();
+    console.log("Invite member:", email);
+
+    setEmail("");
+    setShowInviteModal(false);
   };
 
   return (
@@ -146,10 +101,9 @@ const ManageMembers = ({ workspace }) => {
 
                 <button
                   onClick={handleInviteMember}
-                  disabled={isPending}
-                  className="px-4 py-2 rounded-xl bg-[color:var(--sidebar-accent)] text-[color:var(--sidebar-accent-foreground)] font-semibold disabled:opacity-50"
+                  className="px-4 py-2 rounded-xl bg-[color:var(--sidebar-accent)] text-[color:var(--sidebar-accent-foreground)] font-semibold"
                 >
-                  {isPending ? "Sending..." : "Send Invite"}
+                  Send Invite
                 </button>
               </div>
             </div>
@@ -195,35 +149,6 @@ const ManageMembers = ({ workspace }) => {
           ))}
         </div>
       </div>
-
-      <Toaster
-        position="top-right"
-        toastOptions={{
-          duration: 3000,
-
-          style: {
-            background: "#1e1e1e",
-            color: "#fff",
-            borderRadius: "12px",
-            padding: "14px 16px",
-            fontSize: "14px",
-          },
-
-          success: {
-            iconTheme: {
-              primary: "#22c55e",
-              secondary: "#fff",
-            },
-          },
-
-          error: {
-            iconTheme: {
-              primary: "#ef4444",
-              secondary: "#fff",
-            },
-          },
-        }}
-      />
     </div>
   );
 };

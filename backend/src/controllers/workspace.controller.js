@@ -109,6 +109,7 @@ export const getUserWorkspaces = async (req, res) => {
 export const getWorkspaceById = async (req, res) => {
   try {
     // Retrieve workspace with owner, members, and channels
+    const userid = req.user.id;
     const workspace = await prisma.workspace.findUnique({
       where: {
         id: req.params.workspaceId,
@@ -136,8 +137,25 @@ export const getWorkspaceById = async (req, res) => {
     if (!workspace) {
       return res.status(404).json({ message: "Workspace not found" });
     }
+    const userMember = await prisma.workspace.findFirst({
+      where:{
+        id: req.params.workspaceId,
+        members: {
+          some: {
+            id: userid,
+          },
+        },
+      },
+    });
+    if(!userMember){
+      return res.status(403).json({ message: "Forbidden" });
+      console.log("User is not a member of this workspace 😍");
+      }
 
-    res.json(workspace);
+
+
+    const admin = workspace.owner.email  === req.user.email;
+    res.json({ ...workspace, admin });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
