@@ -67,8 +67,17 @@ export function applyTheme(mode = "light", theme = "rose") {
 export function initTheme() {
   if (typeof window === "undefined") return;
 
-  const savedMode = localStorage.getItem("app-mode") || "light";
-  const savedTheme = localStorage.getItem("app-theme") || "rose";
+  try {
+    const savedMode = localStorage.getItem("app-mode") || "light";
+    const savedTheme = localStorage.getItem("app-theme") || "rose";
 
-  applyTheme(savedMode, savedTheme);
+    applyTheme(savedMode, savedTheme);
+  } catch (error) {
+    console.warn("Theme initialization failed");
+  }
+}
+
+// 🔥 Apply theme instantly on first load (prevents white flash)
+if (typeof window !== "undefined") {
+  initTheme();
 }

@@ -1,17 +1,64 @@
 "use client";
 
+import { Crown, Mail, UserPlus, Users, X } from "lucide-react";
 import { useState } from "react";
-import { Mail, Users, Crown, UserPlus } from "lucide-react";
+import { useMutation } from "@tanstack/react-query";
+import { useParams } from "next/navigation";
+import toast, { Toaster } from "react-hot-toast";
 
 const ManageMembers = ({ workspace }) => {
   const [email, setEmail] = useState("");
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const { id } = useParams();
+
+  const { mutate: inviteWorkspaceMember, isPending } = useMutation({
+    mutationFn: async () => {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/api/v1/workspaces/${id}/members`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            email,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to send invite");
+      }
+
+      return data;
+    },
+
+    onSuccess: () => {
+      toast.success("Invitation sent successfully 🎉");
+
+      setEmail("");
+      setShowInviteModal(false);
+    },
+
+    onError: (error) => {
+      console.error(error);
+
+      toast.error(
+        error.message || "Failed to send invitation"
+      );
+    },
+  });
 
   const handleInviteMember = () => {
-    if (!email) return;
+    if (!email) {
+      toast.error("Please enter email");
+      return;
+    }
 
-    console.log("Invite member:", email);
-
-    setEmail("");
+    inviteWorkspaceMember();
   };
 
   return (
@@ -29,52 +76,91 @@ const ManageMembers = ({ workspace }) => {
           </p>
         </div>
 
-        <div className="px-4 py-2 rounded-xl bg-[color:var(--sidebar-accent)] text-[color:var(--sidebar-accent-foreground)] font-medium shadow-sm">
-          {workspace?.members?.length || 0} Members
-        </div>
-      </div>
-
-      {/* Invite Section */}
-      <div className="bg-[color:var(--background)] border border-[color:var(--border)] rounded-3xl p-6 shadow-sm">
-        <div className="flex items-center gap-3 mb-5">
-          <UserPlus size={22} />
-
-          <h3 className="text-xl font-semibold">
-            Invite New Member
-          </h3>
-        </div>
-
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1 relative">
-            <Mail
-              size={18}
-              className="absolute left-4 top-1/2 -translate-y-1/2 text-[color:var(--muted-foreground)]"
-            />
-
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter member email"
-              className="w-full pl-12 pr-4 py-3 rounded-2xl bg-[color:var(--card)] border border-[color:var(--border)] outline-none focus:ring-2 focus:ring-[color:var(--sidebar-accent)]"
-            />
+        <div className="flex items-center gap-3">
+          <div className="px-4 py-2 rounded-xl bg-[color:var(--sidebar-accent)] text-[color:var(--sidebar-accent-foreground)] font-medium shadow-sm">
+            {workspace?.members?.length || 0} Members
           </div>
 
           <button
-            onClick={handleInviteMember}
-            className="px-6 py-3 rounded-2xl bg-[color:var(--sidebar-accent)] text-[color:var(--sidebar-accent-foreground)] font-semibold hover:opacity-90 transition shadow-sm"
+            onClick={() => setShowInviteModal(true)}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[color:var(--accent)] text-white font-medium shadow-sm hover:opacity-95 transition"
+            aria-label="Open invite modal"
           >
-            Send Invite
+            <UserPlus size={16} />
+            Invite
           </button>
         </div>
       </div>
 
+
+
+      {/* Modal: Invite Popup */}
+      {showInviteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setShowInviteModal(false)}
+          />
+
+          {/* Modal Panel */}
+          <div className="relative w-full max-w-md mx-4 bg-[color:var(--background)] border border-[color:var(--border)] rounded-3xl p-6 shadow-xl z-10">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <UserPlus size={20} />
+                <h4 className="text-lg font-semibold">Invite Member</h4>
+              </div>
+
+              <button
+                onClick={() => setShowInviteModal(false)}
+                className="p-2 rounded-full hover:bg-[color:var(--card)]"
+                aria-label="Close invite modal"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-4">
+              <div className="relative">
+                <Mail
+                  size={16}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-[color:var(--muted-foreground)]"
+                />
+
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Enter member email"
+                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-[color:var(--card)] border border-[color:var(--border)] outline-none focus:ring-2 focus:ring-[color:var(--sidebar-accent)]"
+                />
+              </div>
+
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => setShowInviteModal(false)}
+                  className="px-4 py-2 rounded-xl bg-transparent border border-[color:var(--border)] text-[color:var(--muted-foreground)]"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  onClick={handleInviteMember}
+                  disabled={isPending}
+                  className="px-4 py-2 rounded-xl bg-[color:var(--sidebar-accent)] text-[color:var(--sidebar-accent-foreground)] font-semibold disabled:opacity-50"
+                >
+                  {isPending ? "Sending..." : "Send Invite"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Members List */}
       <div className="bg-[color:var(--background)] border border-[color:var(--border)] rounded-3xl p-6 shadow-sm">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-semibold">
-            Workspace Members
-          </h3>
+          <h3 className="text-xl font-semibold">Workspace Members</h3>
         </div>
 
         <div className="flex flex-col gap-4">
@@ -109,6 +195,35 @@ const ManageMembers = ({ workspace }) => {
           ))}
         </div>
       </div>
+
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 3000,
+
+          style: {
+            background: "#1e1e1e",
+            color: "#fff",
+            borderRadius: "12px",
+            padding: "14px 16px",
+            fontSize: "14px",
+          },
+
+          success: {
+            iconTheme: {
+              primary: "#22c55e",
+              secondary: "#fff",
+            },
+          },
+
+          error: {
+            iconTheme: {
+              primary: "#ef4444",
+              secondary: "#fff",
+            },
+          },
+        }}
+      />
     </div>
   );
 };

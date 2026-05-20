@@ -4,7 +4,6 @@ import prisma from "../db/db.js";
 export const protect = async (req, res, next) => {
   try {
     const token = req.cookies.token; // 🔥 cookie se token
-    console.log("Token from cookie:", token); // 🔥 Debugging log
 
 
     if (!token) {

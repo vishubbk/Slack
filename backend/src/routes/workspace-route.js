@@ -5,12 +5,15 @@ import {
   getWorkspaceById,
   updateWorkspace,
   deleteWorkspace,
-  addWorkspaceMember,
+  inviteWorkspaceMember,
   removeWorkspaceMember,
+  getWorkspaceByToken,
+  acceptWorkspaceInvite
 } from "../controllers/workspace.controller.js";
 
 import { protect } from "../middlewares/authMiddleware.js";
 import { authorizeRoles } from "../middlewares/roleMiddleware.js";
+import { get } from "http";
 
 const router = express.Router();
 
@@ -26,40 +29,23 @@ router.get("/:workspaceId", protect, getWorkspaceById);
 // 🔥 Edit single workspace
 router.patch("/:workspaceId", protect, updateWorkspace);
 
-// 🔥Get All User in single Workspace
-
 // 🔥 Update workspace (only admin/subadmin)
-router.put(
-  "/:workspaceId",
-  protect,
-  authorizeRoles("admin", "subadmin"),
-  updateWorkspace
-);
+router.put("/:workspaceId",protect,authorizeRoles("admin", "subadmin"),updateWorkspace);
 
 // 🔥 Delete workspace (only admin)
-router.delete(
-  "/:workspaceId",
-  protect,
-  authorizeRoles("admin"),
-  deleteWorkspace
-);
+router.delete("/:workspaceId",protect,authorizeRoles("admin"),deleteWorkspace);
 
-// 🔥 Add member to workspace (admin/subadmin)
-router.post(
-  "/:workspaceId/members",
-  protect,
-  authorizeRoles("admin", "subadmin"),
-  addWorkspaceMember
-);
+// 🔥 inviteWorkspaceMember(admin/subadmin)
+router.post("/:workspaceId/members",protect,inviteWorkspaceMember);
 
 // 🔥 Remove member from workspace (admin only)
-router.delete(
-  "/:workspaceId/members/:userId",
-  protect,
-  authorizeRoles("admin"),
-  removeWorkspaceMember
-);
+router.delete("/:workspaceId/members/:userId",protect,authorizeRoles("admin"),removeWorkspaceMember);
 
+// 🔥 Get workspace by invite token
+router.get("/invite/:token", getWorkspaceByToken);
 
+// 🔥 Accept workspace invitation
+
+router.post("/invite/:token/accept",acceptWorkspaceInvite);
 
 export default router;

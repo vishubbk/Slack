@@ -375,6 +375,8 @@ model WorkspaceInvite {
 
   email String
 
+  token String @unique
+
   workspaceId String
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
@@ -382,6 +384,8 @@ model WorkspaceInvite {
   invitedBy User @relation(fields: [invitedById], references: [id], onDelete: Cascade)
 
   status InviteStatus @default(pending)
+
+  expiresAt DateTime
 
   invitedAt DateTime @default(now())
 

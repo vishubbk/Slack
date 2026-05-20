@@ -1,17 +1,8 @@
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
 import crypto from "crypto";
-import { SendEmail } from "../../config/email.verification.js";
+import { sendOtpEmail } from "../../config/email.verification.js";
 import prisma from "../db/db.js";
-
-/* ===============================
-   GENERATE JWT TOKEN
-================================ */
-const generateToken = (id) => {
-  return jwt.sign({ userId: id }, process.env.JWT_SECRET, {
-    expiresIn: "7d",
-  });
-};
+import { generateJWT } from "../services/generate.cookie.js";
 
 /* ===============================
    REGISTER USER
@@ -41,7 +32,7 @@ export const registerUser = async (req, res, next) => {
       },
     });
 
-    const token = generateToken(user.id);
+    const token = generateJWT(user.id);
 
     res.cookie("token", token, {
       httpOnly: true,
@@ -85,7 +76,7 @@ export const loginUser = async (req, res, next) => {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    const token = generateToken(user.id);
+    const token = generateJWT(user.id);
 
     res.cookie("token", token, {
       httpOnly: true,
@@ -156,7 +147,7 @@ export const sendOtp = async (req, res) => {
     });
 
     // Send Email
-    await SendEmail(email, "Your OTP Code", otp);
+    await sendOtpEmail(email, "Your OTP Code", otp);
 
     return res.status(200).json({
       status: "success",
@@ -219,12 +210,18 @@ export const verifyOtp = async (req, res) => {
     }
 
     // Generate token
-    const token = generateToken(user.id);
+    const token = generateJWT(user.id);
+    if (!token) {
+      return res.status(500).json({
+        status: "error",
+        message: "Failed to generate token",
+      });
+    }
 
     // 🔥 ✅ SET COOKIE HERE
     res.cookie("token", token, {
-      httpOnly: true,              // 🔒 secure (no JS access)
-      secure: false,               // ⚠️ localhost (true in production)
+      httpOnly: true, // 🔒 secure (no JS access)
+      secure: false, // ⚠️ localhost (true in production)
       sameSite: "lax",
       maxAge: 24 * 60 * 60 * 1000, // 1 day
     });
@@ -236,7 +233,6 @@ export const verifyOtp = async (req, res) => {
         user, // ✅ token remove kar sakta hai (optional)
       },
     });
-
   } catch (error) {
     console.error("❌ VERIFY ERROR:", error.message);
     return res.status(500).json({
@@ -245,7 +241,6 @@ export const verifyOtp = async (req, res) => {
     });
   }
 };
-
 
 /* ===============================
    GET LOGGED-IN USER PROFILE
@@ -417,16 +412,14 @@ export const searchUsers = async (req, res, next) => {
   }
 };
 
-
 /* ===============================
    ThemeChange USERS
 ================================ */
-export const themeChange = async(req,res,next)=> {
+export const themeChange = async (req, res, next) => {
   try {
     const user = req.user.id;
-    const {mode, theme}= req.body;
+    const { mode, theme } = req.body;
     console.log("THEME CHANGE REQUEST:", { user, mode, theme });
-
 
     const updatedUser = await prisma.user.update({
       where: {
@@ -436,19 +429,15 @@ export const themeChange = async(req,res,next)=> {
         theme,
         appearanceMode: mode,
       },
-    })
-    if(!updatedUser) return res.status(404).json({message:"User not found"});
+    });
+    if (!updatedUser)
+      return res.status(404).json({ message: "User not found" });
 
     res.status(200).json({
-      status:"success",
-      message:"Theme updated successfully",
-
-    })
-
-
+      status: "success",
+      message: "Theme updated successfully",
+    });
   } catch (error) {
     console.error("❌ THEME CHANGE ERROR:", error.message);
-
   }
-
-}
+};

@@ -37,10 +37,9 @@ startServer();
 
 // 🔥 Handle Unhandled Promise Rejections
 process.on("unhandledRejection", (err) => {
-  console.error("❌ Unhandled Rejection:", err.message);
   process.exit(1);
 });
-
+  
 // 🔥 Graceful Shutdown
 process.on("SIGINT", async () => {
   console.log("🛑 SIGINT received. Closing server...");
