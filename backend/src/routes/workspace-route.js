@@ -39,7 +39,7 @@ router.delete("/:workspaceId",protect,authorizeRoles("admin"),deleteWorkspace);
 router.post("/:workspaceId/members",protect,inviteWorkspaceMember);
 
 // 🔥 Remove member from workspace (admin only)
-router.delete("/:workspaceId/members/:userId",protect,authorizeRoles("admin"),removeWorkspaceMember);
+router.delete("/:workspaceId/members/:userId",protect,removeWorkspaceMember);
 
 // 🔥 Get workspace by invite token
 router.get("/invite/:token", getWorkspaceByToken);
